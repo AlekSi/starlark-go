@@ -36,6 +36,7 @@ import (
 func getOptions(src string) *syntax.FileOptions {
 	return &syntax.FileOptions{
 		Set:               option(src, "set"),
+		Pipe:              option(src, "pipe"),
 		While:             option(src, "while"),
 		TopLevelControl:   option(src, "toplevelcontrol"),
 		GlobalReassign:    option(src, "globalreassign"),
@@ -148,6 +149,7 @@ func TestExecFile(t *testing.T) {
 		"testdata/list.star",
 		"testdata/math.star",
 		"testdata/misc.star",
+		"testdata/pipeline.star",
 		"testdata/proto.star",
 		"testdata/set.star",
 		"testdata/string.star",

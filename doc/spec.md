@@ -98,7 +98,7 @@ characters are tokens:
 ```text
 +    -    *    /    //   %    =
 +=   -=   *=   /=   //=  %=   ==   !=
-^    <    >    <<   >>   &    |
+^    <    >    <<   >>   &    |    |>
 ^=   <=   >=   <<=  >>=  &=   |=
 .    ,    ;    :    ~    **
 (    )    [    ]    {    }
@@ -1758,7 +1758,7 @@ The bitwise inversion of x is defined as -(x+1).
 Starlark has the following binary operators, arranged in order of increasing precedence:
 
 ```text
-or
+or   |>
 and
 ==   !=   <    >   <=   >=   in   not in
 |
@@ -1777,6 +1777,7 @@ All other binary operators of equal precedence associate to the left.
 BinaryExpr = Test {Binop Test} .
 
 Binop = 'or'
+      | '|>'
       | 'and'
       | '==' | '!=' | '<' | '>' | '<=' | '>=' | 'in' | 'not' 'in'
       | '|'
@@ -1828,6 +1829,25 @@ x and x[0] == 1
 len(x) == 0 or x[0] == ""
 not x or not x[0]
 ```
+
+#### `|>` (pipeline)
+
+The `|>` operator is a function-application pipeline.
+The expression `x |> f` means `f(x)`.
+The expression `x |> f(a, b)` means `f(x, a, b)`.
+The right-hand side must be an identifier, selector, or call.
+
+```starlark
+1 |> str                         # "1"
+"ab" |> len                      # 2
+"ab" |> "{}{}".format("c")       # "{}{}".format("ab", "c")
+```
+
+`|>` has the same precedence as `or` and associates to the left.
+
+<b>Implementation note:</b>
+The `|>` operator is an optional feature of the Go implementation of
+Starlark, enabled by the `-pipe` flag.
 
 #### Comparisons
 
@@ -4348,6 +4368,7 @@ See [Starlark spec issue 20](https://github.com/bazelbuild/starlark/issues/20).
 * Strings have the additional methods `elem_ords`, `codepoint_ords`, and `codepoints`.
 * The `chr` and `ord` built-in functions are supported.
 * The `set` built-in function is provided (option: `-set`).
+* The `|>` pipeline operator is provided (option: `-pipe`).
 * `set & set` and `set | set` compute set intersection and union, respectively.
 * `assert` is a valid identifier.
 * `if`, `for`, and `while` are permitted at top level (option: `-globalreassign`).

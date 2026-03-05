@@ -78,6 +78,7 @@ const (
 	LTLT_EQ       // <<=
 	GTGT_EQ       // >>=
 	STARSTAR      // **
+	PIPE_GT       // |>
 
 	// Keywords
 	AND
@@ -126,7 +127,7 @@ func (tok Token) String() string { return tokenNames[tok] }
 // GoString is like String but quotes punctuation tokens.
 // Use Sprintf("%#v", tok) when constructing error messages.
 func (tok Token) GoString() string {
-	if tok >= PLUS && tok <= STARSTAR {
+	if tok >= PLUS && tok <= STARSTAR || tok == PIPE_GT {
 		return "'" + tokenNames[tok] + "'"
 	}
 	return tokenNames[tok]
@@ -150,6 +151,7 @@ var tokenNames = [...]string{
 	PERCENT:       "%",
 	AMP:           "&",
 	PIPE:          "|",
+	PIPE_GT:       "|>",
 	CIRCUMFLEX:    "^",
 	LTLT:          "<<",
 	GTGT:          ">>",
@@ -828,6 +830,10 @@ start:
 		case '&':
 			return AMP
 		case '|':
+			if sc.peekRune() == '>' {
+				sc.readRune()
+				return PIPE_GT
+			}
 			return PIPE
 		case '^':
 			return CIRCUMFLEX

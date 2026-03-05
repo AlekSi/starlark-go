@@ -18,6 +18,7 @@ import (
 func getOptions(src string) *syntax.FileOptions {
 	return &syntax.FileOptions{
 		Set:               option(src, "set"),
+		Pipe:              option(src, "pipe"),
 		While:             option(src, "while"),
 		TopLevelControl:   option(src, "toplevelcontrol"),
 		GlobalReassign:    option(src, "globalreassign"),

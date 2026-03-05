@@ -40,6 +40,7 @@ func init() {
 	// non-standard dialect flags
 	flag.BoolVar(&resolve.AllowRecursion, "recursion", resolve.AllowRecursion, "allow while statements and recursive functions")
 	flag.BoolVar(&resolve.AllowGlobalReassign, "globalreassign", resolve.AllowGlobalReassign, "allow reassignment of globals, and if/for/while statements at top level")
+	flag.BoolVar(&resolve.AllowPipe, "pipe", resolve.AllowPipe, "allow pipeline operator (|>)")
 
 	// obsolete flags for features that are now standard
 	flag.BoolVar(&resolve.AllowSet, "set", true, "obsolete; no effect")

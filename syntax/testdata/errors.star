@@ -133,6 +133,8 @@ _ = [x for x in a if b else c] ### `got else, want ']', for, or if`
 ---
 _ = a + b not c ### "got identifier, want in"
 ---
+_ = x |> (a + b) ### "invalid right-hand side of [|]>"
+---
 f(1+2 = 3) ### "keyword argument must have form name=expr"
 ---
 print(1, 2, 3

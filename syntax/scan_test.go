@@ -68,6 +68,8 @@ func TestScanner(t *testing.T) {
 		{`print(x); print(y)`, "print ( x ) ; print ( y ) EOF"},
 		{"\nprint(\n1\n)\n", "print ( 1 ) newline EOF"}, // final \n is at toplevel on non-blank line => token
 		{`/ // /= //= ///=`, "/ // /= //= // /= EOF"},
+		{`x|>f`, "x |> f EOF"},
+		{`x|=y|>z|w`, "x |= y |> z | w EOF"},
 		{`# hello
 print(x)`, "print ( x ) EOF"},
 		{`# hello

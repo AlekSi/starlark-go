@@ -205,6 +205,14 @@ while U: # ok
   pass
 
 ---
+# pipe operator is forbidden unless enabled.
+_ = 1 |> U ### "dialect does not support [|]> operator"
+
+---
+# option:pipe
+_ = 1 |> U # ok
+
+---
 # The parser allows any expression on the LHS of an assignment.
 
 1 = 0 ### "can't assign to literal"

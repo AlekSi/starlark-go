@@ -110,6 +110,7 @@ var (
 	AllowGlobalReassign = false // allow reassignment to top-level names; while loops; and if/for/while at top-level
 	AllowRecursion      = false // allow recursive functions
 	LoadBindsGlobally   = false // load creates global not file-local bindings (deprecated)
+	AllowPipe           = false // allow '|>' pipeline operator
 
 	// obsolete flags for features that are now standard. No effect.
 	AllowBitwise   = true
@@ -726,6 +727,18 @@ func (r *resolver) expr(e syntax.Expr) {
 		r.expr(e.X)
 
 	case *syntax.BinaryExpr:
+		if e.Op == syntax.PIPE_GT && !r.options.Pipe {
+			r.errorf(e.OpPos, doesnt+"support |> operator")
+		}
+		if e.Op == syntax.PIPE_GT {
+			if call, ok := unparenCallExpr(e.Y); ok {
+				p := countPositionalArgs(call)
+				if p >= 255 {
+					pos, _ := e.Span()
+					r.errorf(pos, "%v positional arguments in pipeline call, limit is 255", p+1)
+				}
+			}
+		}
 		r.expr(e.X)
 		r.expr(e.Y)
 
@@ -814,6 +827,33 @@ func (r *resolver) expr(e syntax.Expr) {
 	default:
 		log.Panicf("unexpected expr %T", e)
 	}
+}
+
+func unparenCallExpr(e syntax.Expr) (*syntax.CallExpr, bool) {
+	for {
+		p, ok := e.(*syntax.ParenExpr)
+		if !ok {
+			break
+		}
+		e = p.X
+	}
+	call, ok := e.(*syntax.CallExpr)
+	return call, ok
+}
+
+func countPositionalArgs(call *syntax.CallExpr) int {
+	var p int
+	for _, arg := range call.Args {
+		if binop, ok := arg.(*syntax.BinaryExpr); ok && binop.Op == syntax.EQ {
+			continue
+		}
+		if unop, ok := arg.(*syntax.UnaryExpr); ok &&
+			(unop.Op == syntax.STAR || unop.Op == syntax.STARSTAR) {
+			continue
+		}
+		p++
+	}
+	return p
 }
 
 func (r *resolver) function(function *Function, pos syntax.Position) {

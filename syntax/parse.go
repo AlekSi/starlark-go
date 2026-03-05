@@ -641,11 +641,39 @@ func (p *parser) parseBinopExpr(prec int) Expr {
 		op := p.tok
 		pos := p.nextToken()
 		y := p.parseTestPrec(opprec + 1)
+		if op == PIPE_GT && !isValidPipeRHS(y) {
+			p.in.errorf(pos, "invalid right-hand side of |> (want identifier, selector, or call)")
+		}
 		x = &BinaryExpr{OpPos: pos, Op: op, X: x, Y: y}
 	}
 }
 
-// precedence maps each operator to its precedence (0-7), or -1 for other tokens.
+func unparenExpr(x Expr) Expr {
+	if p, ok := x.(*ParenExpr); ok {
+		return unparenExpr(p.X)
+	}
+	return x
+}
+
+func isPipeTarget(x Expr) bool {
+	switch unparenExpr(x).(type) {
+	case *Ident, *DotExpr:
+		return true
+	}
+	return false
+}
+
+func isValidPipeRHS(x Expr) bool {
+	if isPipeTarget(x) {
+		return true
+	}
+	if call, ok := unparenExpr(x).(*CallExpr); ok {
+		return isPipeTarget(call.Fn)
+	}
+	return false
+}
+
+// precedence maps each operator to its precedence, or -1 for other tokens.
 var precedence [maxToken]int8
 
 // preclevels groups operators of equal precedence.
@@ -653,7 +681,7 @@ var precedence [maxToken]int8
 // Unary MINUS, unary PLUS, and TILDE have higher precedence so are handled in parsePrimary.
 // See https://github.com/google/starlark-go/blob/master/doc/spec.md#binary-operators
 var preclevels = [...][]Token{
-	{OR},                                   // or
+	{OR, PIPE_GT},                          // or |>
 	{AND},                                  // and
 	{NOT},                                  // not (unary)
 	{EQL, NEQ, LT, GT, LE, GE, IN, NOT_IN}, // == != < > <= >= in not in

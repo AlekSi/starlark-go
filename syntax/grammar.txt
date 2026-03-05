@@ -86,6 +86,7 @@ UnaryExpr = 'not' Test .
 BinaryExpr = Test {Binop Test} .
 
 Binop = 'or'
+      | '|>'
       | 'and'
       | '==' | '!=' | '<' | '>' | '<=' | '>=' | 'in' | 'not' 'in'
       | '|'

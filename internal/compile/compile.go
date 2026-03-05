@@ -1431,6 +1431,9 @@ func (fcomp *fcomp) expr(e syntax.Expr) {
 
 			fcomp.block = done
 
+		case syntax.PIPE_GT:
+			fcomp.pipe(e)
+
 		case syntax.PLUS:
 			fcomp.plus(e)
 
@@ -1461,6 +1464,37 @@ func (fcomp *fcomp) expr(e syntax.Expr) {
 type summand struct {
 	x       syntax.Expr
 	plusPos syntax.Position
+}
+
+// pipe emits code for x |> f and x |> f(...), preserving left-to-right
+// evaluation order: first x, then callable expression, then arguments.
+func (fcomp *fcomp) pipe(e *syntax.BinaryExpr) {
+	fcomp.expr(e.X)
+
+	if call, ok := unparen(e.Y).(*syntax.CallExpr); ok {
+		fcomp.expr(call.Fn)
+		fcomp.emit(EXCH) // ... x fn  => ... fn x
+
+		op, arg := fcomp.args(call)
+
+		// Insert x as the first positional argument.
+		p := int(arg >> 8)
+		if p >= 255 {
+			// resolve already checked this; should be unreachable
+			panic("too many arguments in pipeline call")
+		}
+		arg = uint32((p+1)<<8) | (arg & 0xff)
+
+		fcomp.setPos(e.OpPos)
+		fcomp.emit1(op, arg)
+		return
+	}
+
+	// x |> f  => f(x)
+	fcomp.expr(e.Y)
+	fcomp.emit(EXCH) // ... x fn  => ... fn x
+	fcomp.setPos(e.OpPos)
+	fcomp.emit1(CALL, 1<<8)
 }
 
 // plus emits optimized code for ((a+b)+...)+z that avoids naive

@@ -23,6 +23,7 @@ import _ "unsafe" // for linkname
 type FileOptions struct {
 	// resolver
 	Set               bool // allow references to the 'set' built-in function
+	Pipe              bool // allow '|>' operator
 	While             bool // allow 'while' statements
 	TopLevelControl   bool // allow if/for/while statements at top-level
 	GlobalReassign    bool // allow reassignment to top-level names
@@ -42,6 +43,7 @@ type FileOptions struct {
 func LegacyFileOptions() *FileOptions {
 	return &FileOptions{
 		Set:               resolverAllowSet,
+		Pipe:              resolverAllowPipe,
 		While:             resolverAllowGlobalReassign,
 		TopLevelControl:   resolverAllowGlobalReassign,
 		GlobalReassign:    resolverAllowGlobalReassign,
@@ -54,6 +56,8 @@ func LegacyFileOptions() *FileOptions {
 var (
 	//go:linkname resolverAllowSet go.starlark.net/resolve.AllowSet
 	resolverAllowSet bool
+	//go:linkname resolverAllowPipe go.starlark.net/resolve.AllowPipe
+	resolverAllowPipe bool
 	//go:linkname resolverAllowGlobalReassign go.starlark.net/resolve.AllowGlobalReassign
 	resolverAllowGlobalReassign bool
 	//go:linkname resolverAllowRecursion go.starlark.net/resolve.AllowRecursion

@@ -72,6 +72,49 @@ func TestPlusFolding(t *testing.T) {
 	}
 }
 
+func TestPipeCodegen(t *testing.T) {
+	isPredeclared := func(name string) bool { return name == "x" || name == "f" || name == "obj" || name == "y" }
+	isUniversal := func(name string) bool { return false }
+	opts := &syntax.FileOptions{Pipe: true}
+	for i, test := range []struct {
+		src  string
+		want string
+	}{
+		{
+			`x |> f`,
+			`predeclared x; predeclared f; exch; call<256>; return`,
+		},
+		{
+			`x |> f(1, y=2)`,
+			`predeclared x; predeclared f; exch; constant 1; constant "y"; constant 2; call<513>; return`,
+		},
+		{
+			`x |> obj.f`,
+			`predeclared x; predeclared obj; attr<2>; exch; call<256>; return`,
+		},
+		{
+			`x |> obj.f(1)`,
+			`predeclared x; predeclared obj; attr<2>; exch; constant 1; call<512>; return`,
+		},
+	} {
+		expr, err := syntax.ParseExpr("in.star", test.src, 0)
+		if err != nil {
+			t.Errorf("#%d: %v", i, err)
+			continue
+		}
+		locals, err := resolve.ExprOptions(opts, expr, isPredeclared, isUniversal)
+		if err != nil {
+			t.Errorf("#%d: %v", i, err)
+			continue
+		}
+		got := disassemble(Expr(opts, expr, "<expr>", locals).Toplevel)
+		if test.want != got {
+			t.Errorf("expression <<%s>> generated <<%s>>, want <<%s>>",
+				test.src, got, test.want)
+		}
+	}
+}
+
 // disassemble is a trivial disassembler tailored to the accumulator test.
 func disassemble(f *Funcode) string {
 	out := new(bytes.Buffer)
